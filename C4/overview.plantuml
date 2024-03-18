@@ -1,0 +1,26 @@
+@startuml InvestNetHubSystemComplete
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!include DEVICONS/dotnet.puml
+!include DEVICONS/rabbitmq.puml
+
+AddRelTag("async", $lineStyle = DashedLine())
+
+Person(investor, "Investidor", "Utiliza a plataforma de investimentos para gerenciar seus investimentos")
+System_Boundary(c1, "InvestNetHub API de Investimentos") {
+    Container(api, "API Backend", "C#, .NET 7", "Permite o cadastro de usuários e operações de investimento.", $sprite = "dotnet")
+}
+
+System_Boundary(c2, "Serviço de Análise de Riscos e Investimentos") {
+    Container(analysis_service, "Serviço de Análise", "C#, .NET 7", "Realiza análise de perfil de investimento e riscos dos usuários.", $sprite = "dotnet")
+}
+
+Rel(investor, api, "Usa", "Web")
+
+' Relações de comunicação via RabbitMQ
+Rel(api, analysis_service, "Publica que novo usuário foi cadastrado\n[RabbitMQ fila user.created]", "RabbitMQ", $tags = "async")
+Rel(analysis_service, api, "Consome dados do usuário criado\n[RabbitMQ fila user.created]", "RabbitMQ", $tags = "async")
+Rel(analysis_service, api, "Publica que análise foi realizada\n[RabbitMQ fila user.analysis.result]", "RabbitMQ", $tags = "async")
+Rel(api, analysis_service, "Consome resultado da análise do usuário\n[RabbitMQ fila user.analysis.result]", "RabbitMQ", $tags = "async")
+
+@enduml
